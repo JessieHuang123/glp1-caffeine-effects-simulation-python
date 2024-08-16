@@ -3,8 +3,10 @@ from MDAnalysis.analysis import distances
 import nglview as nv
 import matplotlib.pyplot as plt
 
-sample_pdb = "sample.pdb"   # sample pdb file
+# PDB file paths
+protein_pdb = "7ki0.pdb"   # Protein PDB file
+ligand_pdb = "Caffeine.pdb" # Caffeine PDB file
 
-# Loading MDAnalysis
-protein_u = mda.Universe(sample_pdb)
-
+# Load structures using MDAnalysis
+protein_u = mda.Universe(protein_pdb)
+ligand_u = mda.Universe(ligand_pdb)
