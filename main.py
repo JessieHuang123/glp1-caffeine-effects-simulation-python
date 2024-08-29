@@ -4,44 +4,50 @@ from MDAnalysis.analysis import distances
 import nglview as nv
 import matplotlib.pyplot as plt
 
-# Check if the correct number of arguments is provided
-if len(sys.argv) != 3:
-    print("Usage: python script.py <protein_pdb> <ligand_pdb>")
-    sys.exit(1)
+def get_input():
+    if len(sys.argv) != 3:
+        print("Usage: python script.py <protein_pdb> <ligand_pdb>")
+        sys.exit(1)
 
-# Get the PDB file paths from command-line arguments
-protein_pdb = sys.argv[1]
-ligand_pdb = sys.argv[2]
+    protein_pdb = sys.argv[1]
+    ligand_pdb = sys.argv[2]
 
-# Load structures using MDAnalysis
-protein_u = mda.Universe(protein_pdb)
-ligand_u = mda.Universe(ligand_pdb)
+    protein_u = mda.Universe(protein_pdb)
+    ligand_u = mda.Universe(ligand_pdb)
 
-# Select protein and ligand
-protein = protein_u.select_atoms("protein")
-ligand = ligand_u.select_atoms("all")  # Select all atoms of ligand
+    return protein_u, ligand_u
 
-# Move ligand to the center of the protein (manual adjustment may be needed in this case)
-ligand.translate(protein.center_of_mass() - ligand.center_of_mass())
+def process_data(protein_u, ligand_u):
+    protein = protein_u.select_atoms("protein")
+    ligand = ligand_u.select_atoms("all")
 
-# Calculate distances between protein and ligand
-distances_result = distances.distance_array(protein.positions, ligand.positions)
+    ligand.translate(protein.center_of_mass() - ligand.center_of_mass())
 
-# Visualization: Display molecular structures using NGLView
-view = nv.show_mdanalysis(protein_u)
-view.add_representation("cartoon", selection="protein")
-view.add_component(ligand_u)  # Add ligand
-view.add_representation("ball+stick", component=1)  # Display ligand in ball and stick style
-view
+    distances_result = distances.distance_array(protein.positions, ligand.positions)
+    min_distances = distances_result.min(axis=1)
 
-# Calculate and visualize minimum distances
-min_distances = distances_result.min(axis=1)
-plt.hist(min_distances, bins=50)
-plt.xlabel("Distance (Å)")
-plt.ylabel("Frequency")
-plt.title("Distance Distribution between Protein and Ligand")
-plt.show()
+    return protein_u, ligand_u, min_distances
 
-# Print results
-print(f"Minimum distance: {min_distances.min():.2f} Å")
-print(f"Average distance: {min_distances.mean():.2f} Å")
+def display_output(protein_u, ligand_u, min_distances):
+    view = nv.show_mdanalysis(protein_u)
+    view.add_representation("cartoon", selection="protein")
+    view.add_component(ligand_u)
+    view.add_representation("ball+stick", component=1)
+    view
+
+    plt.hist(min_distances, bins=50)
+    plt.xlabel("Distance (Å)")
+    plt.ylabel("Frequency")
+    plt.title("Distance Distribution between Protein and Ligand")
+    plt.show()
+
+    print(f"Minimum distance: {min_distances.min():.2f} Å")
+    print(f"Average distance: {min_distances.mean():.2f} Å")
+
+def main():
+    protein_u, ligand_u = get_input()
+    protein_u, ligand_u, min_distances = process_data(protein_u, ligand_u)
+    display_output(protein_u, ligand_u, min_distances)
+
+if __name__ == "__main__":
+    main()
